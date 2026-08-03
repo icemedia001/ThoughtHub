@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' | Modern Thought Hub' : 'Modern Thought Hub' %></title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-content">
+      <a href="/" class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-pen-nib"></i>
+        </div>
+        <span>ThoughtHub</span>
+      </a>
+      <div class="nav-actions">
+        <a href="/" class="btn btn-secondary"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="/create-blog" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Post</a>
+
+        <% if (typeof user !== 'undefined' && user) { %>
+          <div class="user-pill">
+            <div class="avatar" style="width:30px; height:30px; font-size:0.8rem;">
+              <%= user.username.charAt(0).toUpperCase() %>
+            </div>
+            <span class="user-pill-name">@<%= user.username %></span>
+            <% if (user.isEmailVerified) { %>
+              <span class="verified-badge-sm" title="Verified Author"><i class="fa-solid fa-circle-check"></i> Verified</span>
+            <% } else { %>
+              <span class="unverified-badge-sm" title="Unverified Email">Unverified</span>
+            <% } %>
+          </div>
+          <a href="/logout" class="btn btn-secondary" style="padding: 0.5rem 0.9rem; font-size:0.85rem;"><i class="fa-solid fa-right-from-bracket"></i></a>
+        <% } else { %>
+          <a href="/login" class="btn btn-secondary"><i class="fa-solid fa-right-to-bracket"></i> Sign In</a>
+          <a href="/signup" class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);"><i class="fa-solid fa-user-plus"></i> Sign Up</a>
+        <% } %>
+      </div>
+    </div>
+  </nav>
+
+  <% if (typeof user !== 'undefined' && user && !user.isEmailVerified && user.verificationToken) { %>
+    <div class="verification-banner">
+      <div class="container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+        <span><i class="fa-solid fa-envelope-open-text"></i> Please verify your email to unlock your <strong>Verified Author</strong> badge!</span>
+        <a href="/verify-email?token=<%= user.verificationToken %>" class="btn btn-primary" style="padding: 0.35rem 0.8rem; font-size: 0.82rem;">
+          Verify Now (Simulated Link)
+        </a>
+      </div>
+    </div>
+  <% } %>
+
+  <main class="container">

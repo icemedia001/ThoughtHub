@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / System files
+.DS_Store
+Thumbs.db
+
+# Temporary test session files
+cookies.txt
+login_cookies.txt

@@ -1,0 +1,45 @@
+<%- include('partials/header', { title: 'Sign In' }) %>
+
+<div class="form-container" style="max-width: 480px;">
+  <div class="form-header">
+    <h1 class="form-title">Welcome Back</h1>
+    <p class="form-subtitle">Sign in to post as your Verified Author persona.</p>
+  </div>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger">
+      <i class="fa-solid fa-circle-exclamation"></i> <%= error %>
+    </div>
+  <% } %>
+
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="alert alert-success">
+      <i class="fa-solid fa-circle-check"></i> <%= success %>
+    </div>
+  <% } %>
+
+  <form action="/login" method="POST">
+    <div class="form-group">
+      <label for="identifier" class="form-label">Email or Username *</label>
+      <input type="text" id="identifier" name="identifier" class="form-control" placeholder="colddev or you@example.com" required>
+    </div>
+
+    <div class="form-group">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <label for="password" class="form-label" style="margin-bottom:0;">Password *</label>
+        <a href="/forgot-password" style="font-size: 0.82rem; color: var(--primary);">Forgot Password?</a>
+      </div>
+      <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+      <i class="fa-solid fa-right-to-bracket"></i> Sign In
+    </button>
+
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+      Don't have an account? <a href="/signup" style="color: var(--primary); font-weight: 600;">Create one</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/footer') %>

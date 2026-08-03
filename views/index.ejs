@@ -1,0 +1,119 @@
+<%- include('partials/header', { title: 'Home' }) %>
+
+<section class="hero">
+  <h1 class="hero-title">Ideas, Insights & <span>Stories</span></h1>
+  <p class="hero-subtitle">Discover compelling articles on technology, design, development, and modern workflows.</p>
+</section>
+
+<% if (typeof success !== 'undefined' && success) { %>
+  <div class="alert alert-success" style="margin-bottom: 2rem;">
+    <i class="fa-solid fa-circle-check"></i> <%= success %>
+  </div>
+<% } %>
+
+<div class="filter-bar">
+  <div class="categories" id="categoryFilters">
+    <button class="cat-pill active" data-category="all">All Posts</button>
+    <button class="cat-pill" data-category="Technology">Technology</button>
+    <button class="cat-pill" data-category="Design">Design</button>
+    <button class="cat-pill" data-category="Development">Development</button>
+    <button class="cat-pill" data-category="Lifestyle">Lifestyle</button>
+  </div>
+  <div class="search-box">
+    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+    <input type="text" id="searchInput" class="search-input" placeholder="Search articles...">
+  </div>
+</div>
+
+<% if (posts && posts.length > 0) { %>
+  <div class="posts-grid" id="postsContainer">
+    <% posts.forEach(post => { %>
+      <article class="post-card" data-category="<%= post.category %>">
+        <div class="card-image-wrap">
+          <img src="<%= post.coverImage || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=80' %>" alt="<%= post.title %>" class="card-image" loading="lazy">
+          <span class="badge"><%= post.category || 'General' %></span>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span><i class="fa-regular fa-calendar"></i> <%= post.createdAt %></span>
+            <span>•</span>
+            <span><i class="fa-regular fa-clock"></i> <%= post.readTime || '3 min read' %></span>
+          </div>
+          <h2 class="card-title">
+            <a href="/post/<%= post.id %>"><%= post.title %></a>
+          </h2>
+          <p class="card-excerpt"><%= post.content %></p>
+          <div class="card-footer">
+            <div class="author-info">
+              <div class="avatar"><%= post.author ? post.author.charAt(0).toUpperCase() : 'A' %></div>
+              <div>
+                <span class="author-name"><%= post.author || 'Anonymous' %></span>
+                <% if (post.isVerified) { %>
+                  <span class="verified-tag" title="Verified Registered Author"><i class="fa-solid fa-circle-check"></i> Verified</span>
+                <% } else { %>
+                  <span class="guest-tag">Guest</span>
+                <% } %>
+              </div>
+            </div>
+            <div class="card-actions">
+              <a href="/post/<%= post.id %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.82rem;">Read</a>
+              <a href="/post/<%= post.id %>/edit" class="icon-btn" title="Edit Post"><i class="fa-solid fa-pen"></i></a>
+              <form action="/post/<%= post.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                <button type="submit" class="icon-btn delete" title="Delete Post"><i class="fa-solid fa-trash"></i></button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+<% } else { %>
+  <div class="empty-state">
+    <div class="empty-icon"><i class="fa-solid fa-newspaper"></i></div>
+    <h3 class="empty-title">No blog posts yet</h3>
+    <p class="empty-desc">Be the first to share your ideas with the world.</p>
+    <a href="/create-blog" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create Post</a>
+  </div>
+<% } %>
+
+<script>
+  const searchInput = document.getElementById('searchInput');
+  const catPills = document.querySelectorAll('.cat-pill');
+  const postCards = document.querySelectorAll('.post-card');
+
+  let activeCategory = 'all';
+
+  function filterPosts() {
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+    postCards.forEach(card => {
+      const cardCategory = card.getAttribute('data-category');
+      const titleText = card.querySelector('.card-title').textContent.toLowerCase();
+      const excerptText = card.querySelector('.card-excerpt').textContent.toLowerCase();
+
+      const matchesCat = (activeCategory === 'all' || cardCategory === activeCategory);
+      const matchesSearch = !query || titleText.includes(query) || excerptText.includes(query);
+
+      if (matchesCat && matchesSearch) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  catPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      catPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      activeCategory = pill.getAttribute('data-category');
+      filterPosts();
+    });
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterPosts);
+  }
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,66 @@
+<%- include('partials/header', { title: 'Create New Post' }) %>
+
+<div class="form-container">
+  <div class="form-header">
+    <h1 class="form-title">Create New Article</h1>
+    <p class="form-subtitle">Share your insights, code, or thoughts with the community.</p>
+  </div>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger" style="margin-bottom: 1.5rem;">
+      <i class="fa-solid fa-circle-exclamation"></i> <%= error %>
+    </div>
+  <% } %>
+
+  <form action="/create-blog" method="POST">
+    <div class="form-group">
+      <label for="title" class="form-label">Article Title *</label>
+      <input type="text" id="title" name="title" class="form-control" placeholder="e.g. Master Modern Web Design in 2026" required>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="category" class="form-label">Category</label>
+        <select id="category" name="category" class="form-control">
+          <option value="Technology">Technology</option>
+          <option value="Design">Design</option>
+          <option value="Development" selected>Development</option>
+          <option value="Lifestyle">Lifestyle</option>
+          <option value="General">General</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="author" class="form-label">Author Name</label>
+        <% if (typeof user !== 'undefined' && user) { %>
+          <input type="text" id="author" name="author" class="form-control" value="<%= user.username %>" readonly style="background: rgba(99, 102, 241, 0.15); border-color: var(--primary); font-weight: 600;">
+          <small style="color: var(--primary); font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+            <i class="fa-solid fa-user-check"></i> Logged in as <strong>@<%= user.username %></strong> <%= user.isEmailVerified ? '(Verified Author)' : '(Unverified Email)' %>
+          </small>
+        <% } else { %>
+          <input type="text" id="author" name="author" class="form-control" placeholder="e.g. Guest Writer" required>
+          <small style="color: var(--text-subtle); font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+            Posting as guest. <a href="/login" style="color: var(--primary);">Sign in</a> to get a Verified Author badge.
+          </small>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="coverImage" class="form-label">Cover Image URL (Optional)</label>
+      <input type="url" id="coverImage" name="coverImage" class="form-control" placeholder="https://images.unsplash.com/photo-...">
+    </div>
+
+    <div class="form-group">
+      <label for="content" class="form-label">Article Body Content *</label>
+      <textarea id="content" name="content" class="form-control" placeholder="Write your post content here..." required></textarea>
+    </div>
+
+    <div class="form-actions">
+      <a href="/" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Publish Post</button>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,42 @@
+<%- include('partials/header', { title: 'Sign Up' }) %>
+
+<div class="form-container" style="max-width: 480px;">
+  <div class="form-header">
+    <h1 class="form-title">Create an Account</h1>
+    <p class="form-subtitle">Join ThoughtHub to get a Verified Author badge on your articles.</p>
+  </div>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger">
+      <i class="fa-solid fa-triangle-exclamation"></i> <%= error %>
+    </div>
+  <% } %>
+
+  <form action="/signup" method="POST">
+    <div class="form-group">
+      <label for="username" class="form-label">Unique Username *</label>
+      <input type="text" id="username" name="username" class="form-control" placeholder="e.g. colddev" required pattern="[A-Za-z0-9_]{3,20}" title="Usernames must be 3-20 characters long and contain only letters, numbers, or underscores.">
+      <small style="color: var(--text-subtle); font-size: 0.8rem;">Once claimed, no one else can use this username.</small>
+    </div>
+
+    <div class="form-group">
+      <label for="email" class="form-label">Email Address *</label>
+      <input type="email" id="email" name="email" class="form-control" placeholder="you@example.com" required>
+    </div>
+
+    <div class="form-group">
+      <label for="password" class="form-label">Password *</label>
+      <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required minlength="6">
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+      <i class="fa-solid fa-user-plus"></i> Sign Up
+    </button>
+
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+      Already have an account? <a href="/login" style="color: var(--primary); font-weight: 600;">Sign In</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/footer') %>

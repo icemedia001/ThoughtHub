@@ -1,0 +1,50 @@
+<%- include('partials/header', { title: 'Edit Post: ' + post.title }) %>
+
+<div class="form-container">
+  <div class="form-header">
+    <h1 class="form-title">Edit Article</h1>
+    <p class="form-subtitle">Make updates to your article and save changes.</p>
+  </div>
+
+  <form action="/post/<%= post.id %>/edit" method="POST">
+    <div class="form-group">
+      <label for="title" class="form-label">Article Title *</label>
+      <input type="text" id="title" name="title" class="form-control" value="<%= post.title %>" required>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="category" class="form-label">Category</label>
+        <select id="category" name="category" class="form-control">
+          <option value="Technology" <%= post.category === 'Technology' ? 'selected' : '' %>>Technology</option>
+          <option value="Design" <%= post.category === 'Design' ? 'selected' : '' %>>Design</option>
+          <option value="Development" <%= post.category === 'Development' ? 'selected' : '' %>>Development</option>
+          <option value="Lifestyle" <%= post.category === 'Lifestyle' ? 'selected' : '' %>>Lifestyle</option>
+          <option value="General" <%= post.category === 'General' ? 'selected' : '' %>>General</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="author" class="form-label">Author Name</label>
+        <input type="text" id="author" name="author" class="form-control" value="<%= post.author %>" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="coverImage" class="form-label">Cover Image URL</label>
+      <input type="url" id="coverImage" name="coverImage" class="form-control" value="<%= post.coverImage %>">
+    </div>
+
+    <div class="form-group">
+      <label for="content" class="form-label">Article Body Content *</label>
+      <textarea id="content" name="content" class="form-control" required><%= post.content %></textarea>
+    </div>
+
+    <div class="form-actions">
+      <a href="/post/<%= post.id %>" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/footer') %>
