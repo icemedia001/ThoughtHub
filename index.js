@@ -56,54 +56,8 @@ function formatDate(date = new Date()) {
   });
 }
 
-let memoryUsers = [
-  {
-    id: randomUUID(),
-    username: "AlexRivers",
-    email: "alex@example.com",
-    password: "$2b$10$eW4yR3X1U0mZ2yZ2yZ2yZ2yZ2yZ2yZ2yZ2yZ2yZ2yZ2yZ2yZ2yZ2y",
-    isEmailVerified: true,
-    verificationToken: null,
-    resetPasswordToken: null,
-    resetPasswordExpires: null
-  }
-];
-
-let memoryPosts = [
-  {
-    id: randomUUID(),
-    title: "Building Modern Web Applications with Express & Glassmorphism",
-    category: "Development",
-    author: "AlexRivers",
-    isVerified: true,
-    coverImage: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80",
-    content: `Web development has evolved drastically over the past few years. Modern interfaces prioritize visual aesthetics, responsive performance, and seamless interactive user experiences.\n\nIn this article, we explore how combining Express.js backend services with vanilla CSS glassmorphism, dynamic gradients, and CSS variables creates a sleek, high-performing user interface without bloated frameworks.\n\nKey takeaways:\n- Utilize native CSS custom properties for rapid theme changes.\n- Leverage backdrop-filters to achieve high-end blur translucent surfaces.\n- Keep server-side rendering fast and modular using EJS partials.`,
-    createdAt: "Aug 3, 2026",
-    readTime: "3 min read"
-  },
-  {
-    id: randomUUID(),
-    title: "The Future of AI-Assisted Pair Programming",
-    category: "Technology",
-    author: "Elena Rostova",
-    isVerified: false,
-    coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-    content: `Artificial intelligence is changing the software engineering landscape rapidly. Rather than replacing developers, AI tools serve as supercharged pair programmers that speed up boilerplate generation, catch bug patterns early, and assist in architectural planning.\n\nAs developer tools become more context-aware, engineers can spend less time context switching and more time focusing on core problem solving and creative product design.`,
-    createdAt: "Aug 2, 2026",
-    readTime: "2 min read"
-  },
-  {
-    id: randomUUID(),
-    title: "Mastering UI Design: Micro-Animations & Contrast",
-    category: "Design",
-    author: "Marcus Vance",
-    isVerified: false,
-    coverImage: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=80",
-    content: `Micro-animations are subtle visual feedback moments that make a digital product feel responsive, fluid, and alive. From button hover elevations to smooth tab transitions, micro-interactions guide user attention effortlessly.\n\nPairing micro-animations with crisp color contrast ensures accessible, delightful user experiences for everyone.`,
-    createdAt: "Jul 28, 2026",
-    readTime: "2 min read"
-  }
-];
+let memoryUsers = [];
+let memoryPosts = [];
 
 function mapDbPost(row) {
   if (!row) return null;
@@ -521,18 +475,7 @@ app.post("/create-blog", async (req, res) => {
     finalAuthor = req.session.user.username;
     isVerified = req.session.user.isEmailVerified;
   } else {
-    const guestAuthorInput = (author || "").trim();
-    if (!guestAuthorInput) {
-      finalAuthor = "Guest Writer";
-    } else {
-      const reservedUser = await findUserByUsername(guestAuthorInput);
-      if (reservedUser) {
-        return res.render("new", {
-          error: `The username '${guestAuthorInput}' belongs to a registered account. Please sign in to post under this account or choose a different guest author name.`
-        });
-      }
-      finalAuthor = guestAuthorInput;
-    }
+    finalAuthor = (author || "").trim() || "Anonymous";
     isVerified = false;
   }
 
@@ -584,10 +527,7 @@ app.post("/post/:id/edit", async (req, res) => {
     let updatedAuthor = existingPost.author;
 
     if (!req.session.user && author) {
-      const reservedUser = await findUserByUsername(author.trim());
-      if (!reservedUser) {
-        updatedAuthor = author.trim();
-      }
+      updatedAuthor = author.trim() || "Anonymous";
     }
 
     const updates = {
