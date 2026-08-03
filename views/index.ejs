@@ -12,13 +12,28 @@
 <% } %>
 
 <div class="filter-bar">
-  <div class="categories" id="categoryFilters">
+  <!-- Desktop Category Pills -->
+  <div class="categories categories-desktop" id="categoryFilters">
     <button class="cat-pill active" data-category="all">All Posts</button>
     <button class="cat-pill" data-category="Technology">Technology</button>
     <button class="cat-pill" data-category="Design">Design</button>
     <button class="cat-pill" data-category="Development">Development</button>
     <button class="cat-pill" data-category="Lifestyle">Lifestyle</button>
   </div>
+
+  <!-- Mobile Category Select Dropdown -->
+  <div class="category-dropdown-wrap">
+    <i class="fa-solid fa-filter category-select-icon"></i>
+    <select id="categorySelect" class="category-select" aria-label="Filter posts by category">
+      <option value="all">All Categories</option>
+      <option value="Technology">Technology</option>
+      <option value="Design">Design</option>
+      <option value="Development">Development</option>
+      <option value="Lifestyle">Lifestyle</option>
+    </select>
+    <i class="fa-solid fa-chevron-down category-chevron"></i>
+  </div>
+
   <div class="search-box">
     <i class="fa-solid fa-magnifying-glass search-icon"></i>
     <input type="text" id="searchInput" class="search-input" placeholder="Search articles...">
@@ -79,6 +94,7 @@
 <script>
   const searchInput = document.getElementById('searchInput');
   const catPills = document.querySelectorAll('.cat-pill');
+  const categorySelect = document.getElementById('categorySelect');
   const postCards = document.querySelectorAll('.post-card');
 
   let activeCategory = 'all';
@@ -107,9 +123,24 @@
       catPills.forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
       activeCategory = pill.getAttribute('data-category');
+      if (categorySelect) categorySelect.value = activeCategory;
       filterPosts();
     });
   });
+
+  if (categorySelect) {
+    categorySelect.addEventListener('change', (e) => {
+      activeCategory = e.target.value;
+      catPills.forEach(p => {
+        if (p.getAttribute('data-category') === activeCategory) {
+          p.classList.add('active');
+        } else {
+          p.classList.remove('active');
+        }
+      });
+      filterPosts();
+    });
+  }
 
   if (searchInput) {
     searchInput.addEventListener('input', filterPosts);
