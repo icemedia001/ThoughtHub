@@ -55,15 +55,21 @@ export async function generateArticleWithAgent(topic) {
   }
 
   try {
-    const prompt = `You are a world-class tech blog author. Create an engaging, well-structured article based on the following topic prompt: "${topic}".
+    const prompt = `You are an expert, versatile blog author on ThoughtHub. Write an engaging, well-structured article based on the following topic/title prompt: "${topic}".
+
+STRICT DOMAIN ADAPTATION RULES:
+1. Detect the core theme and domain of the user's prompt (e.g. Movies/TV, Pop Culture, Philosophy, Personal Growth, Lifestyle, Art, Technology, Science).
+2. DO NOT turn non-technical prompts into software development or coding articles. If a prompt mentions a show, character, movie, book, or non-tech concept (e.g. BoJack Horseman, Cinema, Cooking, Travel, Philosophy), write authentically about that specific subject!
+3. Only include code blocks or technical terms if the prompt is explicitly about programming, software engineering, or computer science.
+
 Return ONLY a valid raw JSON object without markdown code block fencing, with the exact keys:
-"title": string (engaging title),
-"category": string (one of: Technology, Design, Development, Lifestyle, General),
-"content": string (detailed body content written in Markdown with headings #, ##, bold text, bullet points, and code blocks if relevant).`;
+"title": string (an engaging, authentic title matching the prompt),
+"category": string (one of: Technology, Design, Development, Lifestyle, General, Entertainment, Culture, Philosophy),
+"content": string (detailed body content written in Markdown with headings #, ##, bold text, bullet points, and quotes).`;
 
     const responseStr = await askAgentWithFallback(
       prompt,
-      "You output clean structured JSON responses for blog generation."
+      "You output clean structured JSON responses for multi-domain blog posts."
     );
 
     let cleanJson = responseStr;
