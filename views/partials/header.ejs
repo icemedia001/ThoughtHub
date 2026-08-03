@@ -7,7 +7,6 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 </head>
 <body>
   <nav class="navbar">
@@ -18,7 +17,12 @@
         </div>
         <span>ThoughtHub</span>
       </a>
-      <div class="nav-actions">
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <i class="fa-solid fa-bars" id="navToggleIcon"></i>
+      </button>
+
+      <div class="nav-actions" id="navActions">
         <a href="/" class="btn btn-secondary"><i class="fa-solid fa-house"></i> Home</a>
 
         <% if (typeof user !== 'undefined' && user) { %>
@@ -37,15 +41,36 @@
               <span class="unverified-badge-sm" title="Unverified Email">Unverified</span>
             <% } %>
           </div>
-          <a href="/logout" class="btn btn-secondary" style="padding: 0.5rem 0.9rem; font-size:0.85rem;" title="Sign Out"><i class="fa-solid fa-right-from-bracket"></i></a>
+          <a href="/logout" class="btn btn-secondary logout-btn" title="Sign Out">
+            <i class="fa-solid fa-right-from-bracket"></i> <span class="logout-text">Sign Out</span>
+          </a>
         <% } else { %>
           <a href="/create-blog" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Post</a>
           <a href="/login" class="btn btn-secondary"><i class="fa-solid fa-right-to-bracket"></i> Sign In</a>
-          <a href="/signup" class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);"><i class="fa-solid fa-user-plus"></i> Sign Up</a>
+          <a href="/signup" class="btn btn-primary signup-btn" style="background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);"><i class="fa-solid fa-user-plus"></i> Sign Up</a>
         <% } %>
       </div>
     </div>
   </nav>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('navToggle');
+      const actions = document.getElementById('navActions');
+      const icon = document.getElementById('navToggleIcon');
+
+      if (toggle && actions) {
+        toggle.addEventListener('click', () => {
+          actions.classList.toggle('active');
+          if (actions.classList.contains('active')) {
+            icon.className = 'fa-solid fa-xmark';
+          } else {
+            icon.className = 'fa-solid fa-bars';
+          }
+        });
+      }
+    });
+  </script>
 
   <% if (typeof user !== 'undefined' && user && !user.isEmailVerified && user.verificationToken) { %>
     <div class="verification-banner">
