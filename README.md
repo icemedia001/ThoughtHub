@@ -34,4 +34,4 @@ Nothing overcomplicated—just a solid publishing platform with a sleek dark gla
 
 4. Open `http://localhost:3000` in your browser.
 
-That's pretty much it. Enjoy.
+That's pretty much it. Enjoy...or not.
