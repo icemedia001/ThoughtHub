@@ -1,0 +1,98 @@
+<%- include('partials/header', { title: activeTab === 'drafts' ? 'My Drafts' : 'My Published Posts' }) %>
+
+<div class="dashboard-container" style="padding: 2rem 0 4rem;">
+  <div class="dashboard-header" style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 800; margin-bottom: 0.25rem;">
+        Author Dashboard
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Manage your published articles and private drafts.
+      </p>
+    </div>
+    <a href="/create-blog" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> Create New Article</a>
+  </div>
+
+  <div class="dashboard-tabs" style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+    <a href="/my-posts" class="tab-link <%= activeTab === 'published' ? 'active' : '' %>">
+      <i class="fa-solid fa-newspaper"></i> Published Articles
+    </a>
+    <a href="/my-drafts" class="tab-link <%= activeTab === 'drafts' ? 'active' : '' %>">
+      <i class="fa-solid fa-file-lines"></i> Private Drafts
+      <% if (typeof draftCount !== 'undefined' && draftCount > 0) { %>
+        <span class="count-badge"><%= draftCount %></span>
+      <% } %>
+    </a>
+  </div>
+
+  <% if (posts.length === 0) { %>
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fa-solid <%= activeTab === 'drafts' ? 'fa-file-circle-plus' : 'fa-box-open' %>"></i>
+      </div>
+      <h3 class="empty-title">No <%= activeTab === 'drafts' ? 'Drafts' : 'Published Articles' %> Found</h3>
+      <p class="empty-desc">
+        <%= activeTab === 'drafts' ? "You don't have any saved drafts right now." : "You haven't published any articles yet." %>
+      </p>
+      <a href="/create-blog" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Write an Article</a>
+    </div>
+  <% } else { %>
+    <div class="posts-grid">
+      <% posts.forEach(post => { %>
+        <article class="post-card">
+          <div class="card-image-wrap">
+            <img src="<%= post.coverImage || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80' %>" alt="<%= post.title %>" class="card-image">
+            <span class="badge"><%= post.category || 'General' %></span>
+            <% if (post.status === 'draft') { %>
+              <span class="badge" style="left: auto; right: 1rem; background: rgba(234, 179, 8, 0.85); color: #000; font-weight: 700;">DRAFT</span>
+            <% } %>
+          </div>
+
+          <div class="card-body">
+            <div class="card-meta">
+              <span><i class="fa-regular fa-calendar"></i> <%= post.createdAt %></span>
+              <span>•</span>
+              <span><i class="fa-regular fa-clock"></i> <%= post.readTime || '3 min read' %></span>
+            </div>
+
+            <h2 class="card-title">
+              <a href="/post/<%= post.id %>"><%= post.title %></a>
+            </h2>
+
+            <p class="card-excerpt">
+              <%= post.content ? post.content.replace(/[#*`>-]/g, '').substring(0, 140) + '...' : '' %>
+            </p>
+
+            <div class="card-footer">
+              <div class="author-info">
+                <div class="avatar"><%= post.author ? post.author.charAt(0).toUpperCase() : 'A' %></div>
+                <div>
+                  <span class="author-name">@<%= post.author %></span>
+                  <% if (post.isVerified) { %>
+                    <span class="verified-tag"><i class="fa-solid fa-circle-check"></i></span>
+                  <% } %>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <% if (post.status === 'draft') { %>
+                  <form action="/post/<%= post.id %>/publish" method="POST" style="display:inline;">
+                    <button type="submit" class="icon-btn" title="Publish Now" style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.4);">
+                      <i class="fa-solid fa-upload"></i>
+                    </button>
+                  </form>
+                <% } %>
+                <a href="/post/<%= post.id %>/edit" class="icon-btn" title="Edit Article"><i class="fa-solid fa-pen"></i></a>
+                <form action="/post/<%= post.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this article?');">
+                  <button type="submit" class="icon-btn delete" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </article>
+      <% }); %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>

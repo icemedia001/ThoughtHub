@@ -10,6 +10,7 @@ import { randomUUID } from "crypto";
 import { marked } from "marked";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./utils/mailer.js";
 import { initDb, query, isDbConnected, getPool } from "./config/db.js";
+import { generateArticleWithAgent, summarizeArticleWithAgent, polishArticleWithAgent } from "./services/aiService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,7 +39,13 @@ app.use(
   })
 );
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
+  if (req.session.user && req.session.user.id) {
+    const freshUser = await findUserById(req.session.user.id);
+    if (freshUser) {
+      req.session.user = freshUser;
+    }
+  }
   res.locals.user = req.session.user || null;
   res.locals.parseMarkdown = content => marked.parse(content || "");
   next();
@@ -72,7 +79,8 @@ function mapDbPost(row) {
     coverImage: row.cover_image,
     content: row.content,
     createdAt: row.created_at,
-    readTime: row.read_time
+    readTime: row.read_time,
+    status: row.status || "published"
   };
 }
 
@@ -90,14 +98,35 @@ function mapDbUser(row) {
   };
 }
 
-async function getAllPosts() {
+async function getAllPosts(statusFilter = "published") {
   if (isDbConnected()) {
-    const res = await query("SELECT * FROM posts ORDER BY id DESC;");
+    let sql = "SELECT * FROM posts ORDER BY id DESC;";
+    let params = [];
+    if (statusFilter !== "all") {
+      sql = "SELECT * FROM posts WHERE status = $1 ORDER BY id DESC;";
+      params = [statusFilter];
+    }
+    const res = await query(sql, params);
     if (res && res.rows) {
       return res.rows.map(mapDbPost);
     }
   }
-  return memoryPosts;
+  if (statusFilter === "all") return memoryPosts;
+  return memoryPosts.filter(p => (p.status || "published") === statusFilter);
+}
+
+async function getPostsByAuthor(authorName, statusFilter = "published") {
+  const queryAuthor = (authorName || "").trim().toLowerCase();
+  if (isDbConnected()) {
+    let sql = "SELECT * FROM posts WHERE LOWER(author) = $1 AND status = $2 ORDER BY id DESC;";
+    const res = await query(sql, [queryAuthor, statusFilter]);
+    if (res && res.rows) {
+      return res.rows.map(mapDbPost);
+    }
+  }
+  return memoryPosts.filter(
+    p => p.author.toLowerCase() === queryAuthor && (p.status || "published") === statusFilter
+  );
 }
 
 async function getPostById(id) {
@@ -113,8 +142,8 @@ async function getPostById(id) {
 async function savePost(post) {
   if (isDbConnected()) {
     await query(
-      `INSERT INTO posts (id, title, category, author, is_verified, cover_image, content, created_at, read_time)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+      `INSERT INTO posts (id, title, category, author, is_verified, cover_image, content, created_at, read_time, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
       [
         post.id,
         post.title,
@@ -124,7 +153,8 @@ async function savePost(post) {
         post.coverImage,
         post.content,
         post.createdAt,
-        post.readTime
+        post.readTime,
+        post.status || "published"
       ]
     );
   }
@@ -140,8 +170,9 @@ async function updatePost(id, updates) {
            author = COALESCE($3, author),
            cover_image = COALESCE($4, cover_image),
            content = COALESCE($5, content),
-           read_time = COALESCE($6, read_time)
-       WHERE id = $7;`,
+           read_time = COALESCE($6, read_time),
+           status = COALESCE($7, status)
+       WHERE id = $8;`,
       [
         updates.title,
         updates.category,
@@ -149,6 +180,7 @@ async function updatePost(id, updates) {
         updates.coverImage,
         updates.content,
         updates.readTime,
+        updates.status,
         id
       ]
     );
@@ -164,6 +196,14 @@ async function deletePostById(id) {
     await query("DELETE FROM posts WHERE id = $1;", [id]);
   }
   memoryPosts = memoryPosts.filter(p => p.id !== id);
+}
+
+async function findUserById(id) {
+  if (isDbConnected()) {
+    const res = await query("SELECT * FROM users WHERE id = $1;", [id]);
+    if (res && res.rows.length > 0) return mapDbUser(res.rows[0]);
+  }
+  return memoryUsers.find(u => u.id === id) || null;
 }
 
 async function findUserByUsername(username) {
@@ -294,6 +334,33 @@ async function updateUserPassword(userId, newPassword) {
   }
 }
 
+app.post("/api/ai/generate", async (req, res) => {
+  const { topic } = req.body;
+  if (!topic || !topic.trim()) {
+    return res.status(400).json({ success: false, error: "Topic prompt is required." });
+  }
+  const result = await generateArticleWithAgent(topic);
+  res.json(result);
+});
+
+app.post("/api/ai/summarize", async (req, res) => {
+  const { title, content } = req.body;
+  if (!content || !content.trim()) {
+    return res.status(400).json({ success: false, error: "Article content is required for summarization." });
+  }
+  const result = await summarizeArticleWithAgent(title || "", content);
+  res.json(result);
+});
+
+app.post("/api/ai/polish", async (req, res) => {
+  const { content } = req.body;
+  if (!content || !content.trim()) {
+    return res.status(400).json({ success: false, error: "Content is required to polish." });
+  }
+  const result = await polishArticleWithAgent(content);
+  res.json(result);
+});
+
 app.get("/signup", (req, res) => {
   if (req.session.user) return res.redirect("/");
   res.render("signup");
@@ -350,11 +417,9 @@ app.get("/verify-email", async (req, res) => {
     user.isEmailVerified = true;
     user.verificationToken = null;
 
-    if (req.session.user && req.session.user.id === user.id) {
-      req.session.user = user;
-    }
+    req.session.user = user;
 
-    const posts = await getAllPosts();
+    const posts = await getAllPosts("published");
     return res.render("index", {
       posts,
       success: `Congratulations @${user.username}! Your email has been verified. You now have a Verified Author badge on all your posts!`
@@ -456,7 +521,7 @@ app.post("/reset-password/:token", async (req, res) => {
 });
 
 app.get("/", async (req, res) => {
-  const posts = await getAllPosts();
+  const posts = await getAllPosts("published");
   res.render("index", { posts });
 });
 
@@ -464,12 +529,46 @@ app.get("/posts", (req, res) => {
   res.redirect("/");
 });
 
+app.get("/my-posts", async (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
+  const posts = await getPostsByAuthor(req.session.user.username, "published");
+  const drafts = await getPostsByAuthor(req.session.user.username, "draft");
+  res.render("dashboard", {
+    activeTab: "published",
+    posts,
+    draftCount: drafts.length
+  });
+});
+
+app.get("/my-drafts", async (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
+  const posts = await getPostsByAuthor(req.session.user.username, "draft");
+  const published = await getPostsByAuthor(req.session.user.username, "published");
+  res.render("dashboard", {
+    activeTab: "drafts",
+    posts,
+    draftCount: posts.length,
+    publishedCount: published.length
+  });
+});
+
+app.post("/post/:id/publish", async (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
+  const postId = req.params.id;
+  const existingPost = await getPostById(postId);
+  if (existingPost && existingPost.author.toLowerCase() === req.session.user.username.toLowerCase()) {
+    await updatePost(postId, { status: "published" });
+    return res.redirect(`/post/${postId}`);
+  }
+  res.redirect("/my-drafts");
+});
+
 app.get("/create-blog", (req, res) => {
   res.render("new");
 });
 
 app.post("/create-blog", async (req, res) => {
-  const { title, category, author, coverImage, content } = req.body;
+  const { title, category, author, coverImage, content, status } = req.body;
   let finalAuthor = "";
   let isVerified = false;
 
@@ -481,6 +580,8 @@ app.post("/create-blog", async (req, res) => {
     isVerified = false;
   }
 
+  const postStatus = (status === "draft" && req.session.user) ? "draft" : "published";
+
   const newPost = {
     id: randomUUID(),
     title: title || "Untitled Article",
@@ -490,10 +591,14 @@ app.post("/create-blog", async (req, res) => {
     coverImage: coverImage || "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80",
     content: content || "",
     createdAt: formatDate(),
-    readTime: calculateReadTime(content)
+    readTime: calculateReadTime(content),
+    status: postStatus
   };
 
   await savePost(newPost);
+  if (postStatus === "draft") {
+    return res.redirect("/my-drafts");
+  }
   res.redirect(`/post/${newPost.id}`);
 });
 
@@ -502,8 +607,15 @@ app.get("/post/:id", async (req, res) => {
   const post = await getPostById(postId);
 
   if (!post) {
-    const posts = await getAllPosts();
+    const posts = await getAllPosts("published");
     return res.status(404).render("index", { posts, error: "Post not found" });
+  }
+
+  if (post.status === "draft") {
+    if (!req.session.user || req.session.user.username.toLowerCase() !== post.author.toLowerCase()) {
+      const posts = await getAllPosts("published");
+      return res.status(403).render("index", { posts, error: "This post is a private draft." });
+    }
   }
 
   res.render("post", { post });
@@ -525,12 +637,14 @@ app.post("/post/:id/edit", async (req, res) => {
   const existingPost = await getPostById(postId);
 
   if (existingPost) {
-    const { title, category, author, coverImage, content } = req.body;
+    const { title, category, author, coverImage, content, status } = req.body;
     let updatedAuthor = existingPost.author;
 
     if (!req.session.user && author) {
       updatedAuthor = author.trim() || "Anonymous";
     }
+
+    const postStatus = (status === "draft" && req.session.user) ? "draft" : "published";
 
     const updates = {
       title: title || existingPost.title,
@@ -538,10 +652,14 @@ app.post("/post/:id/edit", async (req, res) => {
       author: updatedAuthor,
       coverImage: coverImage || existingPost.coverImage,
       content: content || existingPost.content,
-      readTime: calculateReadTime(content || existingPost.content)
+      readTime: calculateReadTime(content || existingPost.content),
+      status: postStatus
     };
 
     await updatePost(postId, updates);
+    if (postStatus === "draft") {
+      return res.redirect("/my-drafts");
+    }
   }
 
   res.redirect(`/post/${postId}`);

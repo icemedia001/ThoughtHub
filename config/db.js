@@ -6,12 +6,18 @@ let pool = null;
 let isConnected = false;
 
 if (process.env.DATABASE_URL) {
+  const isCloudDb = process.env.NODE_ENV === "production" || 
+                    process.env.DATABASE_URL.includes("sslmode=require") || 
+                    process.env.DATABASE_URL.includes("render") || 
+                    process.env.DATABASE_URL.includes("supabase") || 
+                    process.env.DATABASE_URL.includes("neon") || 
+                    process.env.DATABASE_URL.includes("cockroach") ||
+                    process.env.DATABASE_URL.includes("railway");
+
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL.includes("sslmode=require")
-      ? { rejectUnauthorized: false }
-      : false,
-    connectionTimeoutMillis: 3000
+    ssl: isCloudDb ? { rejectUnauthorized: false } : false,
+    connectionTimeoutMillis: 10000
   });
 }
 
@@ -64,8 +70,13 @@ export async function initDb() {
         cover_image TEXT,
         content TEXT NOT NULL,
         created_at VARCHAR(255) NOT NULL,
-        read_time VARCHAR(255) NOT NULL
+        read_time VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'published'
       );
+    `);
+
+    await pool.query(`
+      ALTER TABLE posts ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'published';
     `);
 
     return true;

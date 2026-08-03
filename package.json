@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "dependencies": {
+    "@iqai/adk": "^0.8.5",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
     "connect-pg-simple": "^10.0.0",
@@ -16,5 +18,8 @@
     "marked": "^18.0.7",
     "nodemailer": "^9.0.3",
     "pg": "^8.22.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
   }
 }
