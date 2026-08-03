@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import path from "path";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
+import { marked } from "marked";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./utils/mailer.js";
 import { initDb, query, isDbConnected, getPool } from "./config/db.js";
 
@@ -39,6 +40,7 @@ app.use(
 
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
+  res.locals.parseMarkdown = content => marked.parse(content || "");
   next();
 });
 

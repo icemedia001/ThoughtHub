@@ -52,8 +52,11 @@
     </div>
 
     <div class="form-group">
-      <label for="content" class="form-label">Article Body Content *</label>
-      <textarea id="content" name="content" class="form-control" placeholder="Write your post content here..." required></textarea>
+      <label for="content" class="form-label">Article Body Content (Markdown Supported) *</label>
+      <textarea id="content" name="content" class="form-control" placeholder="Write in Markdown... # Headings, **bold**, *italics*, `code`, [links](url), - lists" required></textarea>
+      <small style="color: var(--text-subtle); font-size: 0.8rem; display: block; margin-top: 0.35rem;">
+        <i class="fa-brands fa-markdown"></i> Markdown supported: <code># Heading</code>, <code>**bold**</code>, <code>*italics*</code>, <code>\`code\`</code>, <code>[link](url)</code>, <code>- list</code>
+      </small>
     </div>
 
     <div class="form-actions">
