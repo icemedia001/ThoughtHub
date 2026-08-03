@@ -555,11 +555,16 @@ app.get("/my-drafts", async (req, res) => {
   });
 });
 
+function canUserEditPost(user, post) {
+  if (!user || !user.username || !post || !post.author) return false;
+  return user.username.toLowerCase() === post.author.toLowerCase();
+}
+
 app.post("/post/:id/publish", async (req, res) => {
   if (!req.session.user) return res.redirect("/login");
   const postId = req.params.id;
   const existingPost = await getPostById(postId);
-  if (existingPost && existingPost.author.toLowerCase() === req.session.user.username.toLowerCase()) {
+  if (existingPost && canUserEditPost(req.session.user, existingPost)) {
     await updatePost(postId, { status: "published" });
     return res.redirect(`/post/${postId}`);
   }
@@ -615,7 +620,7 @@ app.get("/post/:id", async (req, res) => {
   }
 
   if (post.status === "draft") {
-    if (!req.session.user || req.session.user.username.toLowerCase() !== post.author.toLowerCase()) {
+    if (!req.session.user || !canUserEditPost(req.session.user, post)) {
       const posts = await getAllPosts("published");
       return res.status(403).render("index", { posts, error: "This post is a private draft." });
     }
@@ -625,6 +630,7 @@ app.get("/post/:id", async (req, res) => {
 });
 
 app.get("/post/:id/edit", async (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
   const postId = req.params.id;
   const post = await getPostById(postId);
 
@@ -632,44 +638,72 @@ app.get("/post/:id/edit", async (req, res) => {
     return res.redirect("/");
   }
 
+  if (!canUserEditPost(req.session.user, post)) {
+    const posts = await getAllPosts("published");
+    return res.status(403).render("index", {
+      posts,
+      error: "Access denied. You can only edit your own articles."
+    });
+  }
+
   res.render("edit", { post });
 });
 
 app.post("/post/:id/edit", async (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
   const postId = req.params.id;
   const existingPost = await getPostById(postId);
 
-  if (existingPost) {
-    const { title, category, author, coverImage, content, status } = req.body;
-    let updatedAuthor = existingPost.author;
+  if (!existingPost) {
+    return res.redirect("/");
+  }
 
-    if (!req.session.user && author) {
-      updatedAuthor = author.trim() || "Anonymous";
-    }
+  if (!canUserEditPost(req.session.user, existingPost)) {
+    const posts = await getAllPosts("published");
+    return res.status(403).render("index", {
+      posts,
+      error: "Access denied. You can only edit your own articles."
+    });
+  }
 
-    const postStatus = (status === "draft" && req.session.user) ? "draft" : "published";
+  const { title, category, coverImage, content, status } = req.body;
+  const postStatus = (status === "draft" && req.session.user) ? "draft" : "published";
 
-    const updates = {
-      title: title || existingPost.title,
-      category: category || existingPost.category,
-      author: updatedAuthor,
-      coverImage: coverImage || existingPost.coverImage,
-      content: content || existingPost.content,
-      readTime: calculateReadTime(content || existingPost.content),
-      status: postStatus
-    };
+  const updates = {
+    title: title || existingPost.title,
+    category: category || existingPost.category,
+    author: req.session.user.username,
+    coverImage: coverImage || existingPost.coverImage,
+    content: content || existingPost.content,
+    readTime: calculateReadTime(content || existingPost.content),
+    status: postStatus
+  };
 
-    await updatePost(postId, updates);
-    if (postStatus === "draft") {
-      return res.redirect("/my-drafts");
-    }
+  await updatePost(postId, updates);
+  if (postStatus === "draft") {
+    return res.redirect("/my-drafts");
   }
 
   res.redirect(`/post/${postId}`);
 });
 
 app.post("/post/:id/delete", async (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
   const postId = req.params.id;
+  const existingPost = await getPostById(postId);
+
+  if (!existingPost) {
+    return res.redirect("/");
+  }
+
+  if (!canUserEditPost(req.session.user, existingPost)) {
+    const posts = await getAllPosts("published");
+    return res.status(403).render("index", {
+      posts,
+      error: "Access denied. You can only delete your own articles."
+    });
+  }
+
   await deletePostById(postId);
   res.redirect("/");
 });

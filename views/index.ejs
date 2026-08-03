@@ -72,10 +72,12 @@
             </div>
             <div class="card-actions">
               <a href="/post/<%= post.id %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.82rem;">Read</a>
-              <a href="/post/<%= post.id %>/edit" class="icon-btn" title="Edit Post"><i class="fa-solid fa-pen"></i></a>
-              <form action="/post/<%= post.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
-                <button type="submit" class="icon-btn delete" title="Delete Post"><i class="fa-solid fa-trash"></i></button>
-              </form>
+              <% if (typeof user !== 'undefined' && user && post.author && user.username.toLowerCase() === post.author.toLowerCase()) { %>
+                <a href="/post/<%= post.id %>/edit" class="icon-btn" title="Edit Post"><i class="fa-solid fa-pen"></i></a>
+                <form action="/post/<%= post.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                  <button type="submit" class="icon-btn delete" title="Delete Post"><i class="fa-solid fa-trash"></i></button>
+                </form>
+              <% } %>
             </div>
           </div>
         </div>
