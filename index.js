@@ -40,6 +40,9 @@ app.use(
 );
 
 app.use(async (req, res, next) => {
+  if (!isDbConnected()) {
+    await initDb();
+  }
   if (req.session.user && req.session.user.id) {
     const freshUser = await findUserById(req.session.user.id);
     if (freshUser) {
@@ -672,7 +675,13 @@ app.post("/post/:id/delete", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  await initDb();
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+
+await initDb();
+
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
